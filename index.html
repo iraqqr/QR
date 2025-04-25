@@ -3,917 +3,628 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Write2PDF - محرر نصوص إلى PDF</title>
+    <title>منشئ وقارئ رموز QR</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&family=Tajawal:wght@200;300;400;500;700;800;900&family=Almarai:wght@300;400;700;800&family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Noto+Kufi+Arabic:wght@100;200;300;400;500;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@200;300;400;500;600;700&family=Reem+Kufi:wght@400;500;600;700&family=Lato:wght@100;300;400;700;900&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
-        :root {
-            /* Modern Professional Color Scheme */
-            --primary: #0284c7; /* Sky blue */
-            --primary-rgb: 2, 132, 199;
-            --primary-dark: #0369a1;
-            --primary-light: #38bdf8;
-            --secondary: #6366f1; /* Indigo */
-            --accent: #818cf8;
-            
-            /* Neutral Colors */
-            --bg-light: #f8fafc;
-            --bg-dark: #0f172a;
-            --text-light: #334155;
-            --text-dark: #e2e8f0;
-            
-            /* UI Colors */
-            --success: #059669;
-            --warning: #d97706;
-            --error: #dc2626;
-            --info: #2563eb;
-
-            /* Surface Colors */
-            --surface-light: rgba(255, 255, 255, 0.9);
-            --surface-dark: rgba(15, 23, 42, 0.9);
-            --border-light: rgba(2, 132, 199, 0.1);
-            --border-dark: rgba(56, 189, 248, 0.1);
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e2e8f0;
         }
-
-        /* Modern Gradient Background */
-        .animated-bg {
-            background: linear-gradient(135deg, 
-                rgba(2, 132, 199, 0.05),
-                rgba(99, 102, 241, 0.05),
-                rgba(56, 189, 248, 0.05)
-            );
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
+        .modal {
+            transition: opacity 0.3s ease;
         }
-
-        /* Glass Morphism 2.0 */
-        .glass-panel {
-            background: var(--surface-light);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border-light);
-            box-shadow: 
-                0 4px 6px -1px rgba(0, 0, 0, 0.05),
-                0 2px 4px -1px rgba(0, 0, 0, 0.03),
-                0 0 0 1px rgba(2, 132, 199, 0.05);
-        }
-
-        .dark .glass-panel {
-            background: var(--surface-dark);
-            border-color: var(--border-dark);
-            box-shadow: 
-                0 4px 6px -1px rgba(0, 0, 0, 0.2),
-                0 2px 4px -1px rgba(0, 0, 0, 0.1),
-                0 0 0 1px rgba(56, 189, 248, 0.1);
-        }
-
-        /* Modern Button Design */
-        .modern-button {
-            background: var(--surface-light);
-            color: var(--primary);
-            border: 1px solid var(--border-light);
-            padding: 0.625rem 1.25rem;
-            border-radius: 0.75rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 
-                0 2px 4px rgba(2, 132, 199, 0.05),
-                0 0 0 1px rgba(2, 132, 199, 0.05);
-        }
-
-        .modern-button:hover {
-            transform: translateY(-1px);
-            background: var(--primary);
-            color: white;
-            box-shadow: 
-                0 4px 12px rgba(2, 132, 199, 0.15),
-                0 0 0 1px rgba(2, 132, 199, 0.1);
-        }
-
-        /* Export PDF Button specific style */
-        .export-pdf-btn {
-            background: linear-gradient(135deg, #0ea5e9, #2563eb);
-            color: white;
-            border: none;
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2),
-                       0 2px 4px -2px rgba(37, 99, 235, 0.1);
+        .qr-preview {
             transition: all 0.3s ease;
         }
-
-        .export-pdf-btn:hover {
-            background: linear-gradient(135deg, #0284c7, #1d4ed8);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 12px -1px rgba(37, 99, 235, 0.2),
-                       0 4px 6px -2px rgba(37, 99, 235, 0.1);
-        }
-
-        .dark .export-pdf-btn {
-            background: linear-gradient(135deg, #38bdf8, #6366f1);
-        }
-
-        .dark .export-pdf-btn:hover {
-            background: linear-gradient(135deg, #0ea5e9, #4f46e5);
-        }
-
-        /* Editor Enhancements */
-        .editor-container {
-            background: var(--surface-light);
-            border-radius: 1rem;
+        .camera-container {
+            position: relative;
             overflow: hidden;
-            transition: all 0.3s ease;
+            border-radius: 0.5rem;
         }
-
-        #editor {
-            padding: 2rem;
-            background: var(--surface-light) !important;
-            color: var(--text-light) !important;
-            box-shadow: inset 0 0 0 1px var(--border-light);
-            border-radius: 0.75rem;
+        #cameraVideo {
+            transform: scaleX(-1);
         }
-
-        .dark #editor {
-            background: var(--surface-dark) !important;
-            color: var(--text-dark) !important;
-            box-shadow: inset 0 0 0 1px var(--border-dark);
-        }
-
-        /* Toolbar Redesign */
-        .toolbar-wrapper {
-            background: var(--surface-light);
-            border-bottom: 1px solid var(--border-light);
-            padding: 1rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        /* Settings Panel Enhancement */
-        .settings-container {
-            background: var(--surface-light);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            gap: 1.5rem;
-        }
-
-        /* Input Styling */
-        .modern-input {
-            border-radius: 0.75rem;
-            border: 1px solid var(--border-light);
-            padding: 0.75rem;
-            transition: all 0.2s ease;
-            background: var(--surface-light);
-        }
-
-        .modern-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
-        }
-
-        /* Header Enhancement */
-        .site-header {
-            background: var(--surface-light);
-            border-bottom: 1px solid var(--border-light);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            backdrop-filter: blur(12px);
-        }
-
-        /* Developer Credit Enhancement */
-        .developer-credit-header {
-            background: linear-gradient(135deg,
-                rgba(2, 132, 199, 0.1),
-                rgba(56, 189, 248, 0.1)
-            );
-            border: 1px solid var(--border-light);
-            padding: 0.75rem 1.5rem;
-            border-radius: 1rem;
-            color: var(--primary);
-            font-weight: 500;
-            letter-spacing: 0.025em;
-        }
-
-        /* Preview Modal Enhancement */
-        .preview-modal {
-            background: var(--surface-light);
-            border-radius: 1.5rem;
+        .file-upload {
+            position: relative;
             overflow: hidden;
-            box-shadow: 
-                0 20px 25px -5px rgba(0, 0, 0, 0.1),
-                0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        .file-upload input {
+            position: absolute;
+            top: 0;
+            right: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
         }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(51, 51, 51, 0.9);
+            color: white;
+            padding: 12px 24px;
             border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
         }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Text Selection */
-        ::selection {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Enhanced Dark Mode */
-        .dark {
-            background-color: var(--bg-dark) !important;
-        }
-
-        .dark .site-header,
-        .dark .settings-container,
-        .dark .toolbar-wrapper,
-        .dark .editor-container,
-        .dark .preview-modal {
-            background: rgba(15, 23, 42, 0.95) !important;
-            border-color: rgba(51, 65, 85, 0.5);
-        }
-
-        /* Social Media Link Style */
-        .social-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
-            color: white;
-            border-radius: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            margin-right: 1rem;
-        }
-
-        .social-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(131, 58, 180, 0.3);
-        }
-
-        .dark .social-link {
-            opacity: 0.9;
-        }
-
-        .dark .social-link:hover {
+        .toast.show {
             opacity: 1;
         }
-
-        /* List Styling Improvements */
-        #editor ul, #editor ol {
-            list-style-position: inside !important;
-            padding-right: 1.5rem !important;
-            padding-left: 1.5rem !important;
-            margin: 1rem 0 !important;
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+            transition: all 0.3s ease;
         }
-
-        #editor ul {
-            list-style-type: disc !important;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
         }
-
-        #editor ol {
-            list-style-type: decimal !important;
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
         }
-
-        #editor li {
-            display: list-item !important;
-            margin: 0.5rem 0 !important;
-            padding-right: 0.5rem !important;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
         }
-
-        #editor li > * {
-            display: inline-block !important;
+        .btn-secondary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
         }
-
-        /* Fix list appearance in dark mode */
-        .dark #editor ul,
-        .dark #editor ol {
-            color: var(--text-dark) !important;
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
-
-        /* Ensure lists are visible in PDF */
-        .pdf-element ul,
-        .pdf-element ol {
-            list-style-position: inside !important;
-            padding-right: 2em !important;
-            padding-left: 2em !important;
+        .tab-btn {
+            transition: all 0.3s ease;
         }
-
-        .pdf-element ul { list-style-type: disc !important; }
-        .pdf-element ol { list-style-type: decimal !important; }
-        .pdf-element li { 
-            display: list-item !important;
-            margin: 0.5em 0 !important;
+        .tab-btn.active {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        .tab-btn:not(.active) {
+            background: rgba(30, 41, 59, 0.7);
+            color: #94a3b8;
+        }
+        .tab-btn:not(.active):hover {
+            background: rgba(51, 65, 85, 0.7);
+        }
+        .input-field {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+        .glass-effect {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .social-icon {
+            transition: all 0.3s ease;
+        }
+        .social-icon:hover {
+            transform: scale(1.2) translateY(-3px);
+            color: #8b5cf6;
+        }
+        .perspective {
+            perspective: 1000px;
+        }
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0% { transform: translateY(0px) rotateX(5deg) rotateY(-5deg); }
+            50% { transform: translateY(-15px) rotateX(5deg) rotateY(-5deg); }
+            100% { transform: translateY(0px) rotateX(5deg) rotateY(-5deg); }
+        }
+        .neon-text {
+            text-shadow: 0 0 5px #6366f1, 0 0 10px #6366f1;
+        }
+        .qr-code-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .result-content {
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            width: 500px;
+            text-align: center;
         }
     </style>
 </head>
-<body class="light bg-gray-50 text-gray-800" dir="rtl">
-    <div class="animated-bg"></div>
-    <div class="min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="site-header">
-            <div class="container mx-auto flex justify-between items-center flex-wrap gap-4">
-                <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                    <i class="fas fa-file-pdf text-blue-500 dark:text-blue-400 text-2xl"></i>
-                    <h1 class="text-xl font-bold text-blue-500 dark:text-blue-400">Write2PDF</h1>
-                </div>
-                
-                <div class="developer-credit-header">
-                    <i class="fas fa-graduation-cap"></i>
-                    <span>م. علي عبدمسلم</span>
-                </div>
+<body class="min-h-screen">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
 
-                <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                    <button id="languageSwitch" class="modern-button language-switch">
-                        <span class="lang-ar">العربية</span>
-                        <span class="lang-en hidden">English</span>
-                        <i class="fas fa-globe"></i>
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="modal fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 perspective">
+        <div class="card p-8 max-w-md w-full mx-4 floating">
+            <div class="text-center">
+                <div class="qr-code-container inline-block mb-6">
+                    <i class="fas fa-qrcode text-5xl text-purple-500"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4 text-white neon-text">منشئ وقارئ رموز QR</h2>
+                <p class="mb-6 text-gray-300">أداة متطورة لإنشاء وقراءة رموز QR بتصميم ثلاثي الأبعاد</p>
+                <div class="flex flex-col space-y-4">
+                    <button onclick="showGenerator()" class="btn-primary text-white py-3 px-6 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-plus-circle ml-2"></i>
+                        <span>إنشاء رمز QR جديد</span>
                     </button>
-                    <button id="themeToggle" class="modern-button">
-                        <i class="fas fa-moon dark:hidden"></i>
-                        <i class="fas fa-sun hidden dark:block"></i>
-                    </button>
-                    <a href="https://www.instagram.com/c4man" target="_blank" class="social-link">
-                        <i class="fab fa-instagram"></i>
-                        <span class="lang-ar">إنستغرام</span>
-                        <span class="lang-en hidden">Instagram</span>
-                    </a>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="flex-1 container mx-auto px-4 py-6">
-            <div class="editor-section">
-                <!-- Settings Container -->
-                <div class="settings-container glass-panel realistic-shadow">
-                    <div class="setting-group">
-                        <label class="block text-sm font-medium mb-2">نوع الخط</label>
-                        <select id="fontFamily" class="modern-input w-full">
-                            <optgroup label="خطوط عربية">
-                                <option value="Cairo, var(--fonts-ar)" style="font-family: Cairo">Cairo - القاهرة</option>
-                                <option value="Tajawal, var(--fonts-ar)" style="font-family: Tajawal">Tajawal - تجوال</option>
-                                <option value="Almarai, var(--fonts-ar)" style="font-family: Almarai">Almarai - المراعي</option>
-                                <option value="Noto Kufi Arabic, var(--fonts-ar)" style="font-family: 'Noto Kufi Arabic'">Noto Kufi - نوتو كوفي</option>
-                                <option value="Noto Naskh Arabic, var(--fonts-ar)" style="font-family: 'Noto Naskh Arabic'">Noto Naskh - نوتو نسخ</option>
-                                <option value="Readex Pro, var(--fonts-ar)" style="font-family: 'Readex Pro'">Readex Pro - ريدكس برو</option>
-                                <option value="Reem Kufi, var(--fonts-ar)" style="font-family: 'Reem Kufi'">Reem Kufi - ريم كوفي</option>
-                            </optgroup>
-                            <optgroup label="English Fonts">
-                                <option value="Poppins, var(--fonts-en)" style="font-family: Poppins">Poppins</option>
-                                <option value="Montserrat, var(--fonts-en)" style="font-family: Montserrat">Montserrat</option>
-                                <option value="Lato, var(--fonts-en)" style="font-family: Lato">Lato</option>
-                                <option value="Roboto, var(--fonts-en)" style="font-family: Roboto">Roboto</option>
-                                <option value="Open Sans, var(--fonts-en)" style="font-family: 'Open Sans'">Open Sans</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label class="block text-sm font-medium mb-2">حجم الخط</label>
-                        <select id="fontSize" class="modern-input w-full">
-                            <option value="12px">صغير (12px)</option>
-                            <option value="14px" selected>متوسط (14px)</option>
-                            <option value="16px">كبير (16px)</option>
-                            <option value="18px">كبير جداً (18px)</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label class="block text-sm font-medium mb-2">حجم الصفحة</label>
-                        <select id="pageSize" class="modern-input w-full">
-                            <option value="a4">A4</option>
-                            <option value="letter">Letter</option>
-                            <option value="legal">Legal</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label class="block text-sm font-medium mb-2">اتجاه الصفحة</label>
-                        <div class="flex gap-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="orientation" value="portrait" checked class="modern-input h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-slate-600 dark:bg-slate-700">
-                                <span class="ml-2 text-gray-700 dark:text-gray-300">
-                                    <span class="lang-ar">عمودي</span>
-                                    <span class="lang-en hidden">Portrait</span>
-                                </span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="orientation" value="landscape" class="modern-input h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-slate-600 dark:bg-slate-700">
-                                <span class="ml-2 text-gray-700 dark:text-gray-300">
-                                    <span class="lang-ar">أفقي</span>
-                                    <span class="lang-en hidden">Landscape</span>
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Editor and Toolbar -->
-                <div class="editor-container glass-panel realistic-shadow">
-                    <div class="toolbar-wrapper">
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="bold">
-                            <i class="fas fa-bold"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">عريض</span>
-                            <span class="lang-en hidden">Bold</span>
-                        </button>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="italic">
-                            <i class="fas fa-italic"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">مائل</span>
-                            <span class="lang-en hidden">Italic</span>
-                        </button>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="underline">
-                            <i class="fas fa-underline"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">تسطير</span>
-                            <span class="lang-en hidden">Underline</span>
-                        </button>
-                        <div class="h-6 border-l border-gray-300 dark:border-slate-600 mx-1"></div>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="justifyLeft">
-                            <i class="fas fa-align-left"></i>
-                        </button>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="justifyCenter">
-                            <i class="fas fa-align-center"></i>
-                        </button>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="justifyRight">
-                            <i class="fas fa-align-right"></i>
-                        </button>
-                        <div class="h-6 border-l border-gray-300 dark:border-slate-600 mx-1"></div>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="insertUnorderedList">
-                            <i class="fas fa-list-ul"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">قائمة</span>
-                            <span class="lang-en hidden">List</span>
-                        </button>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="insertOrderedList">
-                            <i class="fas fa-list-ol"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">مرقمة</span>
-                            <span class="lang-en hidden">Numbered</span>
-                        </button>
-                        <div class="h-6 border-l border-gray-300 dark:border-slate-600 mx-1"></div>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="createLink">
-                            <i class="fas fa-link"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">رابط</span>
-                            <span class="lang-en hidden">Link</span>
-                        </button>
-                        <button class="modern-button toolbar-btn px-3 py-1 rounded-md" data-command="unlink">
-                            <i class="fas fa-unlink"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">إزالة</span>
-                            <span class="lang-en hidden">Remove</span>
-                        </button>
-                        <button class="modern-button toolbar-btn px-3 py-1 bg-red-100 dark:bg-red-900 rounded-md text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 ml-auto rtl:ml-0 rtl:mr-auto" id="clearContent">
-                            <i class="fas fa-trash-alt"></i>
-                            <span class="lang-ar mr-1 rtl:mr-0 rtl:ml-1">مسح الكل</span>
-                            <span class="lang-en hidden">Clear All</span>
-                        </button>
-                    </div>
-                    <div id="editor" contenteditable="true" class="min-h-[400px] p-6"></div>
-                    <div class="resize-handle" title="اسحب لتغيير الحجم"></div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex justify-center gap-4">
-                    <button id="previewBtn" class="modern-button hover:bg-primary-light">
-                        <i class="fas fa-eye"></i>
-                        <span class="lang-ar">معاينة</span>
-                        <span class="lang-en hidden">Preview</span>
-                    </button>
-                    <button id="exportPdf" class="modern-button export-pdf-btn">
-                        <i class="fas fa-file-pdf"></i>
-                        <span class="lang-ar">تحويل إلى PDF</span>
-                        <span class="lang-en hidden">Export to PDF</span>
-                    </button>
-                </div>
-            </div>
-        </main>
-
-        <!-- Preview Modal -->
-        <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-            <div class="preview-modal">
-                <div class="flex justify-between items-center border-b border-gray-200 dark:border-slate-700 px-6 py-4">
-                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">
-                        <span class="lang-ar">معاينة PDF</span>
-                        <span class="lang-en hidden">PDF Preview</span>
-                    </h3>
-                    <button id="closePreview" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="flex-1 overflow-auto p-6">
-                    <div id="previewContent" class="bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-slate-700 rounded-lg"></div>
-                </div>
-                <div class="border-t border-gray-200 dark:border-slate-700 px-6 py-4 flex justify-end">
-                    <button id="exportFromPreview" class="modern-button export-pdf-btn px-4 py-2">
-                        <i class="fas fa-file-pdf mr-2 rtl:mr-0 rtl:ml-2"></i>
-                        <span class="lang-ar">تحويل إلى PDF</span>
-                        <span class="lang-en hidden">Export to PDF</span>
+                    <button onclick="showScanner()" class="btn-secondary text-white py-3 px-6 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-camera ml-2"></i>
+                        <span>قراءة رمز QR</span>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Result Modal -->
+    <div id="resultModal" class="result-modal hidden">
+        <div class="result-content">
+            <h3 class="text-xl font-bold mb-4 text-white">نتيجة قراءة رمز QR</h3>
+            <div id="modalResultContent" class="glass-effect p-4 rounded-lg mb-6 break-words"></div>
+            <div class="flex justify-center gap-4">
+                <button onclick="copyModalResult()" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg flex items-center">
+                    <i class="fas fa-copy ml-2"></i>
+                    <span>نسخ</span>
+                </button>
+                <button onclick="closeResultModal()" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center">
+                    <i class="fas fa-times ml-2"></i>
+                    <span>إغلاق</span>
+                </button>
+                <button id="modalOpenLinkBtn" onclick="openModalResultLink()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center hidden">
+                    <i class="fas fa-external-link-alt ml-2"></i>
+                    <span>فتح الرابط</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <div class="inline-block perspective">
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-2 floating">
+                    <i class="fas fa-qrcode text-purple-500"></i> منشئ وقارئ رموز QR
+                </h1>
+            </div>
+            <p class="text-gray-300">قم بإنشاء وقراءة رموز QR بسهولة وسرعة</p>
+        </header>
+
+        <!-- Tabs -->
+        <div class="flex justify-center mb-8">
+            <div class="inline-flex rounded-xl glass-effect p-1">
+                <button id="generatorTab" onclick="showGenerator()" class="tab-btn active px-5 py-3 rounded-xl font-medium flex items-center">
+                    <i class="fas fa-qrcode ml-2"></i>
+                    <span>إنشاء رمز QR</span>
+                </button>
+                <button id="scannerTab" onclick="showScanner()" class="tab-btn px-5 py-3 rounded-xl font-medium flex items-center">
+                    <i class="fas fa-camera ml-2"></i>
+                    <span>قراءة رمز QR</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Generator Section -->
+        <div id="generatorSection" class="card p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6 text-white flex items-center">
+                <i class="fas fa-plus-circle text-purple-500 ml-2"></i>
+                إنشاء رمز QR جديد
+            </h2>
+            
+            <div class="mb-6">
+                <label for="qrText" class="block text-gray-300 mb-3">أدخل النص أو الرابط:</label>
+                <div class="relative">
+                    <input type="text" id="qrText" placeholder="https://example.com أو أي نص آخر" 
+                           class="input-field w-full px-5 py-4 rounded-xl focus:ring-2 focus:ring-purple-500">
+                    <div class="absolute left-4 top-4 text-gray-400">
+                        <i class="fas fa-link"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="generateQR()" class="btn-primary w-full text-white py-4 px-6 rounded-xl flex items-center justify-center mb-6">
+                <i class="fas fa-qrcode ml-2"></i>
+                <span>إنشاء رمز QR</span>
+            </button>
+            
+            <div id="qrResult" class="hidden text-center">
+                <div class="mb-6">
+                    <div id="qrCode" class="qr-preview inline-block p-4 bg-white rounded-lg border border-gray-200"></div>
+                </div>
+                <button onclick="downloadQR()" class="btn-secondary text-white py-3 px-6 rounded-xl flex items-center justify-center mx-auto">
+                    <i class="fas fa-download ml-2"></i>
+                    <span>تنزيل الرمز</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Scanner Section -->
+        <div id="scannerSection" class="card p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6 text-white flex items-center">
+                <i class="fas fa-camera text-emerald-400 ml-2"></i>
+                قراءة رمز QR
+            </h2>
+            
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Camera Scanner -->
+                <div class="flex-1">
+                    <h3 class="font-medium mb-4 text-gray-300">الماسح الضوئي بالكاميرا:</h3>
+                    <div class="camera-container glass-effect aspect-square flex items-center justify-center mb-6">
+                        <video id="cameraVideo" class="w-full h-full object-cover hidden"></video>
+                        <div id="cameraPlaceholder" class="text-center p-6 text-gray-400">
+                            <i class="fas fa-camera text-4xl mb-3"></i>
+                            <p>انقر على الزر لتفعيل الكاميرا</p>
+                        </div>
+                    </div>
+                    <button id="cameraBtn" onclick="toggleCamera()" class="btn-primary w-full text-white py-4 px-6 rounded-xl flex items-center justify-center mb-6">
+                        <i class="fas fa-camera ml-2"></i>
+                        <span>تفعيل الكاميرا</span>
+                    </button>
+                </div>
+                
+                <!-- File Upload -->
+                <div class="flex-1">
+                    <h3 class="font-medium mb-4 text-gray-300">تحميل صورة:</h3>
+                    <div class="file-upload glass-effect rounded-xl border-2 border-dashed border-gray-600 aspect-square flex items-center justify-center mb-6 cursor-pointer hover:border-purple-500 transition-colors">
+                        <div class="text-center p-6 text-gray-400">
+                            <i class="fas fa-image text-4xl mb-3"></i>
+                            <p>انقر لاختيار صورة تحتوي على رمز QR</p>
+                            <p class="text-sm mt-2">أو اسحب الصورة هنا</p>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" onchange="handleFileUpload(this)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900/50 py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center space-x-6 mb-4">
+                <a href="https://instagram.com/c4man" target="_blank" class="social-icon text-gray-400 hover:text-pink-500 text-2xl">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+            <p class="text-gray-400 mb-2">تم تطويره بواسطة</p>
+            <p class="text-purple-400 font-medium">المهندس علي عبدمسلم</p>
+            <p class="text-gray-500 text-sm mt-4">جميع الحقوق محفوظة © <span id="currentYear"></span></p>
+        </div>
+    </footer>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Theme Toggle
-            const themeToggle = document.getElementById('themeToggle');
-            const body = document.body;
-            
-            // Check for saved theme preference
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            body.classList.add(savedTheme);
-            
-            themeToggle.addEventListener('click', () => {
-                body.classList.toggle('dark');
-                body.classList.toggle('light');
-                const currentTheme = body.classList.contains('dark') ? 'dark' : 'light';
-                localStorage.setItem('theme', currentTheme);
-            });
+        // Set current year in footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-            // Language Toggle
-            const languageSwitch = document.getElementById('languageSwitch');
-            const html = document.documentElement;
+        // Toast notification function
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
             
-            // Check for saved language preference
-            const savedLang = localStorage.getItem('language') || 'ar';
-            if (savedLang === 'en') {
-                toggleLanguage();
-            }
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        // Show welcome modal on load
+        window.onload = function() {
+            document.getElementById('welcomeModal').classList.add('flex');
+            document.getElementById('welcomeModal').classList.remove('hidden');
             
-            languageSwitch.addEventListener('click', toggleLanguage);
-            
-            function toggleLanguage() {
-                const currentLang = html.getAttribute('lang');
-                const newLang = currentLang === 'ar' ? 'en' : 'ar';
-                const newDir = newLang === 'ar' ? 'rtl' : 'ltr';
-                
-                html.setAttribute('lang', newLang);
-                html.setAttribute('dir', newDir);
-                
-                document.querySelectorAll('.lang-ar').forEach(el => el.classList.toggle('hidden'));
-                document.querySelectorAll('.lang-en').forEach(el => el.classList.toggle('hidden'));
-                
-                localStorage.setItem('language', newLang);
+            // Add floating animation to elements
+            const elements = document.querySelectorAll('.floating');
+            elements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.2}s`;
+            });
+        };
+
+        // Tab switching
+        function showGenerator() {
+            document.getElementById('welcomeModal').classList.add('hidden');
+            document.getElementById('generatorSection').classList.remove('hidden');
+            document.getElementById('scannerSection').classList.add('hidden');
+            document.getElementById('generatorTab').classList.add('active');
+            document.getElementById('scannerTab').classList.remove('active');
+        }
+
+        function showScanner() {
+            document.getElementById('welcomeModal').classList.add('hidden');
+            document.getElementById('generatorSection').classList.add('hidden');
+            document.getElementById('scannerSection').classList.remove('hidden');
+            document.getElementById('scannerTab').classList.add('active');
+            document.getElementById('generatorTab').classList.remove('active');
+        }
+
+        // QR Generator - Improved version
+        function generateQR() {
+            const text = document.getElementById('qrText').value.trim();
+            if (!text) {
+                showToast('الرجاء إدخال نص أو رابط أولاً');
+                return;
             }
 
-            // Editor Functionality
-            const editor = document.getElementById('editor');
-            const toolbarBtns = document.querySelectorAll('[data-command]');
-            const clearContent = document.getElementById('clearContent');
+            const qrCodeElement = document.getElementById('qrCode');
+            qrCodeElement.innerHTML = '';
             
-            // Load saved content
-            const savedContent = localStorage.getItem('editorContent');
-            if (savedContent) {
-                editor.innerHTML = savedContent;
-            }
-            
-            // Save content on input
-            let saveTimeout;
-            editor.addEventListener('input', () => {
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => {
-                    localStorage.setItem('editorContent', editor.innerHTML);
-                }, 500);
-            });
-            
-            // Toolbar buttons
-            toolbarBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const command = btn.getAttribute('data-command');
-                    
-                    if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
-                        document.execCommand(command, false, null);
-                        
-                        // Fix list styling after insertion
-                        const lists = editor.querySelectorAll(command === 'insertUnorderedList' ? 'ul' : 'ol');
-                        lists.forEach(list => {
-                            list.style.listStylePosition = 'inside';
-                            list.style.paddingRight = '1.5rem';
-                            list.style.paddingLeft = '1.5rem';
-                            list.style.margin = '1rem 0';
-                            list.style.listStyleType = command === 'insertUnorderedList' ? 'disc' : 'decimal';
-                            
-                            // Fix individual list items
-                            list.querySelectorAll('li').forEach(item => {
-                                item.style.display = 'list-item';
-                                item.style.marginBottom = '0.5rem';
-                            });
-                        });
-                    } else if (command === 'createLink') {
-                        const url = prompt('أدخل الرابط:', 'https://');
-                        if (url) document.execCommand(command, false, url);
-                    } else {
-                        document.execCommand(command, false, null);
-                    }
-                    
-                    editor.focus();
-                });
-            });
-            
-            // Clear content
-            clearContent.addEventListener('click', () => {
-                if (confirm('هل أنت متأكد أنك تريد مسح كل المحتوى؟')) {
-                    editor.innerHTML = '';
-                    localStorage.setItem('editorContent', '');
-                }
-            });
-
-            // PDF Export
-            const exportPdf = document.getElementById('exportPdf');
-            const exportFromPreview = document.getElementById('exportFromPreview');
-            const previewBtn = document.getElementById('previewBtn');
-            const previewModal = document.getElementById('previewModal');
-            const closePreview = document.getElementById('closePreview');
-            const previewContent = document.getElementById('previewContent');
-            
-            exportPdf.addEventListener('click', generatePdf);
-            exportFromPreview.addEventListener('click', generatePdf);
-            
-            previewBtn.addEventListener('click', () => {
-                previewContent.innerHTML = editor.innerHTML;
-                applyPreviewStyles();
-                previewModal.classList.remove('hidden');
-            });
-            
-            closePreview.addEventListener('click', () => {
-                previewModal.classList.add('hidden');
-            });
-            
-            function applyPreviewStyles() {
-                const fontFamily = document.getElementById('fontFamily').value;
-                const fontSize = document.getElementById('fontSize').value;
-                
-                previewContent.style.fontFamily = fontFamily;
-                previewContent.style.fontSize = fontSize;
-                previewContent.style.lineHeight = '1.6';
-                previewContent.style.color = body.classList.contains('dark') ? '#f8fafc' : '#1f2937';
-            }
-            
-            function generatePdf() {
-                const pageSize = document.getElementById('pageSize').value;
-                const orientation = document.querySelector('input[name="orientation"]:checked').value;
-                const margins = parseInt(document.getElementById('pageMargins').value);
-                const fontFamily = document.getElementById('fontFamily').value;
-                const fontSize = document.getElementById('fontSize').value;
-                
-                const element = document.createElement('div');
-                element.className = 'pdf-element';
-                element.style.fontFamily = fontFamily;
-                element.style.fontSize = fontSize;
-                element.style.direction = document.documentElement.dir;
-                element.innerHTML = editor.innerHTML.replace(/<p>/g, '<p class="numbered">');
-                
-                // Add specific styles for PDF
-                const styles = `
-                    .pdf-element {
-                        font-family: ${fontFamily} !important;
-                        font-size: ${fontSize} !important;
-                        color: #000 !important;
-                        line-height: 1.6 !important;
-                        direction: ${document.documentElement.dir} !important;
-                    }
-                    .pdf-element * {
-                        font-family: ${fontFamily} !important;
-                        color: #000 !important;
-                    }
-                    .pdf-element ul, .pdf-element ol {
-                        padding-right: 2em !important;
-                        padding-left: 2em !important;
-                        margin: 1em 0 !important;
-                        list-style-position: inside !important;
-                    }
-                    .pdf-element ul { list-style-type: disc !important; }
-                    .pdf-element ol { list-style-type: decimal !important; }
-                    .pdf-element li { margin: 0.5em 0 !important; }
-                    .pdf-element p:not(:empty) {
-                        counter-increment: paragraph;
-                        position: relative;
-                        padding-right: 2.5rem;
-                    }
-                    .pdf-element p:not(:empty)::before {
-                        content: counter(paragraph);
-                        position: absolute;
-                        right: 0;
-                        color: var(--primary);
-                        font-weight: bold;
-                    }
-                `;
-                
-                const styleSheet = document.createElement('style');
-                styleSheet.textContent = styles;
-                element.appendChild(styleSheet);
-                
-                const opt = {
-                    margin: margins,
-                    filename: 'document.pdf',
-                    image: { type: 'jpeg', quality: 1 },
-                    html2canvas: { 
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        dpi: 192,
-                        letterRendering: true,
-                        backgroundColor: '#ffffff',
-                        windowWidth: 1024,
-                        scrollY: 0,
-                        scrollX: 0
+            try {
+                // First try with the standard method
+                QRCode.toCanvas(qrCodeElement, text, {
+                    width: 200,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#ffffff'
                     },
-                    jsPDF: { 
-                        unit: 'mm', 
-                        format: pageSize, 
-                        orientation: orientation,
-                        compress: true,
-                        precision: 16,
-                        enableLinks: true,
-                        fontFaces: true
+                    errorCorrectionLevel: 'H' // High error correction
+                }, function(error) {
+                    if (error) {
+                        console.error('Standard QR generation error:', error);
+                        // Fallback to alternative method if standard fails
+                        generateQRFallback(text, qrCodeElement);
+                    } else {
+                        document.getElementById('qrResult').classList.remove('hidden');
+                        showToast('تم إنشاء رمز QR بنجاح');
                     }
-                };
+                });
+            } catch (e) {
+                console.error('QR generation exception:', e);
+                generateQRFallback(text, qrCodeElement);
+            }
+        }
+
+        // Fallback QR generation method
+        function generateQRFallback(text, element) {
+            try {
+                // Create canvas manually
+                const canvas = document.createElement('canvas');
+                element.appendChild(canvas);
                 
-                // Show loading indicator
-                const loadingEl = document.createElement('div');
-                loadingEl.innerHTML = '<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div class="bg-white p-4 rounded-lg">جاري التحويل...</div></div>';
-                document.body.appendChild(loadingEl);
+                QRCode.toCanvas(canvas, text, {
+                    width: 200,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#ffffff'
+                    },
+                    errorCorrectionLevel: 'H'
+                }, function(error) {
+                    if (error) {
+                        console.error('Fallback QR generation error:', error);
+                        showToast('حدث خطأ أثناء إنشاء رمز QR. يرجى المحاولة بنص آخر.');
+                    } else {
+                        document.getElementById('qrResult').classList.remove('hidden');
+                        showToast('تم إنشاء رمز QR بنجاح');
+                    }
+                });
+            } catch (e) {
+                console.error('Fallback QR generation exception:', e);
+                showToast('حدث خطأ غير متوقع. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+            }
+        }
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrCode canvas');
+            if (!canvas) {
+                showToast('لا يوجد رمز QR لتنزيله');
+                return;
+            }
+
+            try {
+                const link = document.createElement('a');
+                link.download = 'qrcode.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('تم بدء تنزيل رمز QR');
+            } catch (e) {
+                console.error('Download error:', e);
+                showToast('حدث خطأ أثناء محاولة التنزيل');
+            }
+        }
+
+        // QR Scanner
+        let cameraStream = null;
+        let scanInterval = null;
+        let lastScannedText = null;
+        let lastScannedTime = 0;
+
+        function toggleCamera() {
+            const video = document.getElementById('cameraVideo');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            const btn = document.getElementById('cameraBtn');
+            
+            if (cameraStream) {
+                // Turn off camera
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+                video.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                btn.innerHTML = '<i class="fas fa-camera ml-2"></i><span>تفعيل الكاميرا</span>';
                 
-                // Create temporary container for better rendering
-                const container = document.createElement('div');
-                container.style.position = 'absolute';
-                container.style.left = '-9999px';
-                container.style.top = '0';
-                container.style.width = '1024px';
-                container.appendChild(element);
-                document.body.appendChild(container);
+                if (scanInterval) {
+                    clearInterval(scanInterval);
+                    scanInterval = null;
+                }
                 
-                html2pdf()
-                    .set(opt)
-                    .from(element)
-                    .save()
-                    .then(() => {
-                        loadingEl.remove();
-                        container.remove();
+                showToast('تم إيقاف الكاميرا');
+            } else {
+                // Turn on camera
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(stream => {
+                        cameraStream = stream;
+                        video.srcObject = stream;
+                        video.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                        btn.innerHTML = '<i class="fas fa-stop ml-2"></i><span>إيقاف الكاميرا</span>';
+                        
+                        video.play().then(() => {
+                            scanInterval = setInterval(scanQR, 500);
+                            showToast('تم تفعيل الكاميرا، قم بتوجيهها نحو رمز QR');
+                        }).catch(err => {
+                            console.error('Video play error:', err);
+                            showToast('تعذر تشغيل الكاميرا');
+                        });
                     })
                     .catch(err => {
-                        console.error('PDF generation error:', err);
-                        loadingEl.remove();
-                        container.remove();
-                        alert('حدث خطأ أثناء إنشاء PDF. يرجى المحاولة مرة أخرى.');
+                        console.error('Camera access error:', err);
+                        showToast('تعذر الوصول إلى الكاميرا. يرجى التحقق من الأذونات.');
                     });
             }
+        }
 
-            // Close modals when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === previewModal) {
-                    previewModal.classList.add('hidden');
-                }
-            });
-
-            // Add smooth scrolling
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                });
-            });
-
-            // Editor resize functionality
-            const editorContainer = document.querySelector('.editor-container');
-            const resizeHandle = document.querySelector('.resize-handle');
-            let isResizing = false;
-            let startHeight;
-            let startY;
-
-            resizeHandle.addEventListener('mousedown', initResize);
-            document.addEventListener('mousemove', resize);
-            document.addEventListener('mouseup', stopResize);
-
-            // Touch support
-            resizeHandle.addEventListener('touchstart', initResize);
-            document.addEventListener('touchmove', resize);
-            document.addEventListener('touchend', stopResize);
-
-            function initResize(e) {
-                isResizing = true;
-                startHeight = editorContainer.offsetHeight;
-                startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-                
-                // Add temporary overlay to prevent text selection while resizing
-                const overlay = document.createElement('div');
-                overlay.style.cssText = 'position: fixed; inset: 0; z-index: 9999; cursor: row-resize;';
-                overlay.id = 'resize-overlay';
-                document.body.appendChild(overlay);
-            }
-
-            function resize(e) {
-                if (!isResizing) return;
-                
-                const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-                const delta = currentY - startY;
-                const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, startHeight + delta));
-                
-                editorContainer.style.height = `${newHeight}px`;
-                e.preventDefault();
-            }
-
-            function stopResize() {
-                isResizing = false;
-                const overlay = document.getElementById('resize-overlay');
-                if (overlay) overlay.remove();
-            }
-
-            // Font Family Preview
-            const fontSelect = document.getElementById('fontFamily');
-            fontSelect.addEventListener('change', function() {
-                editor.style.fontFamily = this.value;
-                this.style.fontFamily = this.value.split(',')[0];
-            });
-
-            // Initialize font preview on load
-            fontSelect.style.fontFamily = fontSelect.value.split(',')[0];
-
-            // Enhance list commands
-            const listButtons = document.querySelectorAll('[data-command^="insert"]');
-            listButtons.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const command = btn.getAttribute('data-command');
-                    document.execCommand(command, false, null);
-                    
-                    // Fix list styling after insertion
-                    const lists = editor.querySelectorAll('ul, ol');
-                    lists.forEach(list => {
-                        if (command === 'insertUnorderedList') {
-                            list.style.listStyleType = 'disc';
-                        } else {
-                            list.style.listStyleType = 'decimal';
-                        }
-                        list.style.paddingInlineStart = '2em';
-                    });
-                    
-                    editor.focus();
-                });
-            });
-
-            // Auto add paragraphs on Enter key
-            editor.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    // Wait for the default enter behavior
-                    setTimeout(() => {
-                        const selection = window.getSelection();
-                        const range = selection.getRangeAt(0);
-                        const node = range.commonAncestorContainer;
-
-                        if (node.nodeType === 3 && node.parentNode === editor) {
-                            // Text node directly in editor
-                            const p = document.createElement('p');
-                            p.appendChild(node.cloneNode());
-                            node.parentNode.replaceChild(p, node);
-                            
-                            // Place cursor in new paragraph
-                            range.selectNodeContents(p);
-                            range.collapse(false);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                        }
-                    }, 0);
-                }
-            });
-
-            // Handle paste to maintain paragraph structure
-            editor.addEventListener('paste', function(e) {
-                e.preventDefault();
-                const text = e.clipboardData.getData('text/plain');
-                const paragraphs = text.split(/\n\s*\n/);
-                
-                const fragment = document.createDocumentFragment();
-                paragraphs.forEach(content => {
-                    if (content.trim()) {
-                        const p = document.createElement('p');
-                        p.textContent = content.trim();
-                        fragment.appendChild(p);
+        function scanQR() {
+            const video = document.getElementById('cameraVideo');
+            if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            try {
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code) {
+                    const now = Date.now();
+                    // Prevent duplicate scans within 3 seconds
+                    if (code.data !== lastScannedText || (now - lastScannedTime) > 3000) {
+                        lastScannedText = code.data;
+                        lastScannedTime = now;
+                        displayResult(code.data);
+                        toggleCamera(); // Turn off camera after successful scan
                     }
+                }
+            } catch (e) {
+                console.error('QR scan error:', e);
+            }
+        }
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    try {
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        
+                        if (code) {
+                            displayResult(code.data);
+                        } else {
+                            showToast('لم يتم العثور على رمز QR في الصورة');
+                        }
+                    } catch (e) {
+                        console.error('File scan error:', e);
+                        showToast('حدث خطأ أثناء معالجة الصورة');
+                    }
+                };
+                img.onerror = function() {
+                    showToast('تعذر تحميل الصورة');
+                };
+                img.src = e.target.result;
+            };
+            reader.onerror = function() {
+                showToast('حدث خطأ أثناء قراءة الملف');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayResult(content) {
+            const modal = document.getElementById('resultModal');
+            const contentElement = document.getElementById('modalResultContent');
+            const openLinkBtn = document.getElementById('modalOpenLinkBtn');
+            
+            contentElement.textContent = content;
+            
+            // Check if content is a URL
+            try {
+                const url = new URL(content);
+                openLinkBtn.classList.remove('hidden');
+                // Auto-open URL if it's a web link
+                setTimeout(() => {
+                    window.open(content, '_blank');
+                }, 1000);
+            } catch (e) {
+                openLinkBtn.classList.add('hidden');
+            }
+            
+            modal.classList.remove('hidden');
+            showToast('تم قراءة رمز QR بنجاح');
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+
+        function copyModalResult() {
+            const content = document.getElementById('modalResultContent').textContent;
+            navigator.clipboard.writeText(content)
+                .then(() => showToast('تم نسخ النص بنجاح'))
+                .catch(err => {
+                    console.error('Copy error:', err);
+                    showToast('تعذر نسخ النص');
                 });
-                
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
-                range.deleteContents();
-                range.insertNode(fragment);
-            });
-        });
+        }
+
+        function openModalResultLink() {
+            const content = document.getElementById('modalResultContent').textContent;
+            try {
+                window.open(content, '_blank');
+            } catch (e) {
+                console.error('Open link error:', e);
+                showToast('تعذر فتح الرابط');
+            }
+        }
     </script>
 </body>
 </html>
